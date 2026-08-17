@@ -6,6 +6,7 @@ class AdminStates(StatesGroup):
     description = State()
     price = State()
     delivery_data = State()
+    auth_code = State()
     photo = State()
     broadcast = State()
 

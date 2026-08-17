@@ -1,4 +1,5 @@
 import asyncio
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from telethon import TelegramClient
@@ -93,3 +94,45 @@ async def listen_for_telegram_code(phone_clean: str, timeout: int = 150) -> str:
             pass
 
     return ""
+
+
+async def send_login_code(phone_clean: str) -> str:
+    """Sends a Telegram login code to the given phone number.
+    Returns the phone_code_hash on success.
+    Raises exception on failure.
+    """
+    session_path = _session_path(phone_clean)
+    if os.path.exists(session_path):
+        os.remove(session_path)
+
+    client = TelegramClient(session_path, API_ID, API_HASH)
+    try:
+        await client.connect()
+        result = await client.send_code_request(phone_clean)
+        return result.phone_code_hash
+    except Exception as e:
+        raise e
+    finally:
+        try:
+            await client.disconnect()
+        except Exception:
+            pass
+
+
+async def sign_in_with_code(phone_clean: str, code: str, phone_code_hash: str) -> bool:
+    """Signs in with the given code and creates the session file.
+    Returns True on success, raises exception on failure.
+    """
+    session_path = _session_path(phone_clean)
+    client = TelegramClient(session_path, API_ID, API_HASH)
+    try:
+        await client.connect()
+        await client.sign_in(phone=phone_clean, code=code, phone_code_hash=phone_code_hash)
+        return True
+    except Exception as e:
+        raise e
+    finally:
+        try:
+            await client.disconnect()
+        except Exception:
+            pass

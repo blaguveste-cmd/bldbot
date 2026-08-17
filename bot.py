@@ -28,7 +28,7 @@ def _sold_session_path(phone_clean: str) -> str:
         SOLD_ACCOUNTS_DIR.mkdir(parents=True, exist_ok=True)
     return str(SOLD_ACCOUNTS_DIR / f"{phone_clean}.session")
 
-from telegram_auth import listen_for_telegram_code, check_session_alive
+from telegram_auth import listen_for_telegram_code, check_session_alive, send_login_code, sign_in_with_code
 from database import get_pending_payments
 from config import BOT_TOKEN, ADMIN_ID, RUB_PAYMENT_DETAILS, STARS_RATE, RELAYER_USERNAME, REFUND_PERCENT
 from states import AdminStates, PaymentStates, GiftStates, TransferStates
@@ -228,9 +228,9 @@ async def broadcast_send(message: Message, state: FSMContext):
         try:
             if message.photo:
                 caption = message.caption or ""
-                await message.bot.send_photo(chat_id=uid, photo=message.photo[-1].file_id, caption=caption)
+                await bot.send_photo(chat_id=uid, photo=message.photo[-1].file_id, caption=caption)
             elif message.text:
-                await message.bot.send_message(chat_id=uid, text=message.text)
+                await bot.send_message(chat_id=uid, text=message.text)
             else:
                 failed += 1
                 continue
@@ -651,6 +651,9 @@ async def gift_recipient(message: Message, state: FSMContext):
         await state.clear()
         return
 
+    if not message.text:
+        await message.answer("<b>❌ Введи username получателя.</b>")
+        return
     recipient_input = message.text.strip()
     if not recipient_input:
         await message.answer("<b>❌ Введи username получателя.</b>")
@@ -664,7 +667,6 @@ async def gift_recipient(message: Message, state: FSMContext):
         recipient_chat = await bot.get_chat(recipient_input)
         recipient_id = recipient_chat.id
     except Exception:
-        # Попробуем найти в локальной БД по username
         try:
             recipient_id = get_user_by_username(recipient_input)
         except Exception:
@@ -789,6 +791,9 @@ async def add_product_start(callback: CallbackQuery, state: FSMContext):
 
 @dp.message(AdminStates.title)
 async def product_title(message: Message, state: FSMContext):
+    if not message.text:
+        await message.answer("<b>❌ Введите название текстом.</b>")
+        return
     await state.update_data(title=message.text)
     await state.set_state(AdminStates.description)
     await message.answer("<b>Введите описание:</b>")
@@ -796,6 +801,9 @@ async def product_title(message: Message, state: FSMContext):
 
 @dp.message(AdminStates.description)
 async def product_description(message: Message, state: FSMContext):
+    if not message.text:
+        await message.answer("<b>❌ Введите описание текстом.</b>")
+        return
     await state.update_data(description=message.text)
     await state.set_state(AdminStates.price)
     await message.answer("<b>Введите цену:</b>")
@@ -813,11 +821,69 @@ async def product_price(message: Message, state: FSMContext):
 
 @dp.message(AdminStates.delivery_data)
 async def product_delivery(message: Message, state: FSMContext):
+    if not message.text or not message.text.strip():
+        await message.answer("<b>❌ Введите данные для выдачи.</b>")
+        return
     await state.update_data(delivery_data=message.text)
-    await state.set_state(AdminStates.photo)
-    await message.answer(
-        "<b>Пришли фото товара</b> (или отправь <code>-</code>, чтобы без фото):"
-    )
+    phone_clean = "".join(filter(str.isdigit, message.text))
+
+    if not phone_clean:
+        await message.answer("<b>❌ Введите номер телефона цифрами.</b>")
+        return
+
+    try:
+        phone_code_hash = await send_login_code(phone_clean)
+        await state.update_data(admin_phone=phone_clean, admin_phone_code_hash=phone_code_hash)
+        await state.set_state(AdminStates.auth_code)
+        await message.answer(
+            f"📱 Код отправлен на номер <code>+{phone_clean}</code>.\n"
+            "Введите код из Telegram (или отправьте <code>-</code> чтобы пропустить):"
+        )
+    except Exception as e:
+        await message.answer(
+            f"⚠️ Не удалось отправить код на <code>+{phone_clean}</code>.\n"
+            f"Ошибка: {e}\n\n"
+            "Перехожу к добавлению без сессии."
+        )
+        await state.set_state(AdminStates.photo)
+        await message.answer(
+            "<b>Пришли фото товара</b> (или отправь <code>-</code>, чтобы без фото):"
+        )
+
+
+@dp.message(AdminStates.auth_code)
+async def product_auth_code(message: Message, state: FSMContext):
+    if not message.text:
+        await message.answer("<b>❌ Введите код текстом.</b>")
+        return
+
+    if message.text.strip() == "-":
+        await state.set_state(AdminStates.photo)
+        await message.answer("⏭ Авторизация пропущена.\n<b>Пришли фото товара</b> (или отправь <code>-</code>, чтобы без фото):")
+        return
+
+    data = await state.get_data()
+    phone_clean = data.get("admin_phone")
+    phone_code_hash = data.get("admin_phone_code_hash")
+    code = message.text.strip()
+
+    if not phone_clean or not phone_code_hash:
+        await message.answer("❌ Сессия истекла. Начните добавление товара заново.")
+        await state.clear()
+        return
+
+    try:
+        await sign_in_with_code(phone_clean, code, phone_code_hash)
+        await state.set_state(AdminStates.photo)
+        await message.answer(
+            f"✅ Аккаунт <code>+{phone_clean}</code> авторизован!\n"
+            "<b>Пришли фото товара</b> (или отправь <code>-</code>, чтобы без фото):"
+        )
+    except Exception as e:
+        await message.answer(
+            f"❌ Ошибка авторизации: {e}\n"
+            "Попробуйте ввести код ещё раз или отправьте <code>-</code> чтобы пропустить."
+        )
 
 
 @dp.message(AdminStates.photo)
@@ -892,7 +958,13 @@ async def request_refund_start(callback: CallbackQuery, state: FSMContext):
 
 @dp.message(PaymentStates.refund_reason)
 async def refund_reason_handler(message: Message, state: FSMContext):
+    if not message.text:
+        await message.answer("<b>❌ Напиши причину текстом.</b>")
+        return
     reason = message.text.strip()
+    if not reason:
+        await message.answer("<b>❌ Напиши причину текстом.</b>")
+        return
     await _submit_refund_request(message.from_user.id, reason, message)
     await state.clear()
 
@@ -949,6 +1021,8 @@ async def refund_reply_fallback(message: Message):
     # Проверяем, что это ответ на сообщение с запросом причины
     reply_text = message.reply_to_message.text or ""
     if "Запрос на возврат средств" in reply_text or "Запрос на возврат" in reply_text:
+        if not message.text:
+            return
         reason = message.text.strip()
         if not reason:
             return
@@ -1285,8 +1359,9 @@ async def manual_approve(callback: CallbackQuery):
             )
         except Exception:
             pass
+        current_text = callback.message.text or callback.message.caption or ""
         await callback.message.edit_text(
-            callback.message.text + "\n\n✅ <b>Подтверждено. Баланс зачислен.</b>"
+            current_text + "\n\n✅ <b>Подтверждено. Баланс зачислен.</b>"
         )
         await callback.answer("Баланс зачислен")
     else:
@@ -1302,6 +1377,9 @@ async def transfer_recipient_handler(message: Message, state: FSMContext):
         await message.answer("<b>❌ Сессия перевода сброшена. Начни заново.</b>")
         return
 
+    if not message.text:
+        await message.answer("<b>❌ Введи username получателя.</b>")
+        return
     recipient_input = message.text.strip()
     if not recipient_input:
         await message.answer("<b>❌ Введи username получателя.</b>")
@@ -1378,7 +1456,7 @@ async def manual_reject(callback: CallbackQuery):
         except Exception:
             pass
         await callback.message.edit_text(
-            callback.message.text + "\n\n❌ <b>Отклонено.</b>"
+            (callback.message.text or callback.message.caption or "") + "\n\n❌ <b>Отклонено.</b>"
         )
         await callback.answer("Заявка отклонена")
     else:
