@@ -1127,14 +1127,11 @@ async def stars_amount_handler(message: Message, state: FSMContext):
         await message.answer("<b>❌ Сумма должна быть больше 0 ₽.</b>")
         return
 
-    if amount < 12.5:
-        await message.answer("<b>❌ Минимальная сумма — 12.50 ₽ (15 ⭐).</b>")
+    if amount < 15 / STARS_RATE:
+        await message.answer(f"<b>❌ Минимальная сумма — {15 / STARS_RATE:.2f} ₽ (15 ⭐).</b>")
         return
 
-    # Все обычные подарки имеют номинал, кратный 5 ⭐.
-    # Округляем требуемое количество Stars вверх до ближайших 5 ⭐,
-    # чтобы пользователь всегда мог собрать сумму существующими подарками.
-    target_stars = max(15, int(((amount * 1.2) + 4.999999) // 5) * 5)
+    target_stars = max(15, int(((amount * STARS_RATE) + 4.999999) // 5) * 5)
 
     create_star_request(message.from_user.id, amount, target_stars)
     await state.clear()

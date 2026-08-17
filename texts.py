@@ -241,30 +241,32 @@ def stars_pay_prompt() -> str:
     return (
         "⭐ <b><i>Пополнение через Telegram Stars</i></b>\n\n"
         "Введи, на сколько <b>рублей</b> хочешь пополнить баланс.\n"
-        "<b>Курс:</b> <code>1 ₽ = 1.2 ⭐</code>\n\n"
+        f"<b>Курс:</b> <code>1 ₽ = {STARS_RATE} ⭐</code>\n\n"
         "Отправляй <b>несколько подарков</b> подряд: например, <code>15+15</code> ⭐ или <code>15+25</code> ⭐.\n"
         "<b>Доступные номиналы:</b> <i>15 / 25 / 50 / 100 ⭐</i>."
     )
 
 
-def gifts_pay_text(relayer: str, rate: float = 1/1.2, amount: float | None = None, target_stars: int | None = None) -> str:
+def gifts_pay_text(relayer: str, rate: float = None, amount: float | None = None, target_stars: int | None = None) -> str:
+    if rate is None:
+        rate = STARS_RATE
     if amount is None or target_stars is None:
         return (
             "⭐ <b><i>Оплата Stars</i></b>\n\n"
             f"<b>Отправляй подарки на {relayer}</b>.\n"
             "Можно отправить один или несколько подарков.\n\n"
-            "📊 <b>Курс:</b> <code>1 ₽ = 1.2 ⭐</code>\n\n"
+            f"📊 <b>Курс:</b> <code>1 ₽ = {rate} ⭐</code>\n\n"
             "🎁 <b>Номиналы:</b> <i>15 / 25 / 50 / 100 ⭐</i>"
         )
     return (
         "⭐ <b><i>Оплата Stars</i></b>\n\n"
         f"<b>Сумма:</b> <code>{fmt_money(amount)}</code>\n"
         f"<b>Нужно получить:</b> <code>{target_stars} ⭐</code>\n"
-        f"<b>Это примерно:</b> <code>{target_stars / 1.2:.2f} ₽</code> по курсу.\n\n"
+        f"<b>Это примерно:</b> <code>{target_stars / rate:.2f} ₽</code> по курсу.\n\n"
         f"<b>Отправляй подарки на {relayer}</b>.\n"
         "Можно отправить несколько подарков подряд — например <code>15+15</code>, <code>15+25</code>, <code>25+50</code> и т.д.\n\n"
         "🎁 <b>Номиналы:</b> <i>15 / 25 / 50 / 100 ⭐</i>\n"
-        "📊 <b>Курс:</b> <code>1 ₽ = 1.2 ⭐</code>\n\n"
+        f"📊 <b>Курс:</b> <code>1 ₽ = {rate} ⭐</code>\n\n"
         "<i>Можно отправлять подарки в любой комбинации. После достижения нужного количества Stars баланс пополнится автоматически. Если подарков окажется больше — лишние Stars тоже будут учтены.</i>"
     )
 
