@@ -1,5 +1,7 @@
 """Тексты BLDSH ACCS."""
 
+from config import STARS_RATE, REFUND_PERCENT
+
 
 def fmt_money(amount: int | float) -> str:
     if isinstance(amount, float):
