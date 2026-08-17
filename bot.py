@@ -543,7 +543,13 @@ async def buy_product(callback: CallbackQuery, state: FSMContext):
         add_balance(user_id, -product_price)
 
         # Оповещаем пользователя и админа о попытке покупки, но не фиксируем продажу до получения кода
-        await safe_edit(callback, "⏳ <b>Покупка в процессе</b>\n\n<i>Сессия проверена. Ждём код из Telegram...</i>", None)
+        await safe_edit(
+            callback,
+            f"⏳ <b>Покупка в процессе</b>\n\n"
+            f"📱 Номер: <code>+{phone_clean}</code>\n\n"
+            f"<i>Сессия проверена. Открой Telegram, введи этот номер и запроси код. Ждём код...</i>",
+            None,
+        )
         await callback.answer()
 
         try:
