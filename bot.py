@@ -36,6 +36,7 @@ from keyboards import (
     main_keyboard, back_keyboard, products_keyboard, buy_product_keyboard,
     admin_keyboard, delete_keyboard, deposit_methods_keyboard, pay_invoice_keyboard,
     admin_manual_payment_keyboard, after_purchase_keyboard, subscribe_keyboard,
+    logout_account_keyboard, purchase_flow_keyboard,
 )
 import texts as t
 
@@ -548,7 +549,7 @@ async def buy_product(callback: CallbackQuery, state: FSMContext):
             f"⏳ <b>Покупка в процессе</b>\n\n"
             f"📱 Номер: <code>+{phone_clean}</code>\n\n"
             f"<i>Сессия проверена. Открой Telegram, введи этот номер и запроси код. Ждём код...</i>",
-            None,
+            purchase_flow_keyboard(phone_clean),
         )
         await callback.answer()
 
@@ -586,6 +587,10 @@ async def buy_product(callback: CallbackQuery, state: FSMContext):
                 await callback.message.answer(
                     t.code_received_text(captured_code),
                     reply_markup=after_purchase_keyboard(),
+                )
+                await callback.message.answer(
+                    t.purchase_review_text(),
+                    reply_markup=logout_account_keyboard(phone_clean),
                 )
                 try:
                     session_file = _session_path(phone_clean)
@@ -713,7 +718,10 @@ async def gift_recipient(message: Message, state: FSMContext):
         add_balance(user_id, -product_price)
 
         # Попытка покупки подарка — не фиксируем продажу до получения кода
-        await message.answer(t.gift_purchase_success_text(recipient_input))
+        await message.answer(
+            t.gift_purchase_success_text(recipient_input),
+            reply_markup=purchase_flow_keyboard(phone_clean),
+        )
 
         recipient_sent = True
         try:
@@ -760,6 +768,11 @@ async def gift_recipient(message: Message, state: FSMContext):
                         await message.answer("<b>✅ Код получен и отправлен получателю.</b>", reply_markup=after_purchase_keyboard())
                     except Exception:
                         pass
+
+                await message.answer(
+                    t.purchase_review_text(),
+                    reply_markup=logout_account_keyboard(phone_clean),
+                )
 
                 try:
                     session_file = _session_path(phone_clean)
@@ -1509,6 +1522,45 @@ async def back(callback: CallbackQuery):
     text = main_text(callback.from_user.id, callback.from_user.first_name)
     await show_section(callback, text, main_keyboard, section="start")
     await callback.answer()
+
+
+@dp.callback_query(F.data == "login_help")
+async def login_help(callback: CallbackQuery):
+    await callback.message.answer(t.login_help_text())
+    await callback.answer()
+
+
+@dp.callback_query(F.data.startswith("logout_"))
+async def logout_account(callback: CallbackQuery):
+    phone_clean = callback.data.split("_", 1)[1]
+    session_file = _session_path(phone_clean)
+    sold_file = _sold_session_path(phone_clean)
+    removed = False
+    try:
+        if os.path.exists(sold_file):
+            os.remove(sold_file)
+            removed = True
+        if os.path.exists(session_file):
+            os.remove(session_file)
+            removed = True
+        if removed:
+            await callback.answer("✅ Выход из аккаунта выполнен.", show_alert=True)
+            await callback.message.edit_text(
+                f"🚪 <b>Выход из аккаунта выполнен.</b>\n\n"
+                f"📱 Номер: <code>+{phone_clean}</code>\n\n"
+                "Сессия удалена с сервера.",
+                reply_markup=main_keyboard,
+            )
+        else:
+            await callback.answer("Сессия уже удалена или не найдена.", show_alert=True)
+            await callback.message.edit_text(
+                f"🚪 <b>Выход из аккаунта</b>\n\n"
+                f"📱 Номер: <code>+{phone_clean}</code>\n\n"
+                "Сессия не найдена на сервере.",
+                reply_markup=main_keyboard,
+            )
+    except Exception as e:
+        await callback.answer(f"Ошибка: {e}", show_alert=True)
 
 
 async def check_payments():

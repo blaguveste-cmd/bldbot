@@ -108,6 +108,23 @@ def after_purchase_keyboard():
     ])
 
 
+def purchase_flow_keyboard(phone_clean: str):
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=_blue("❓ Помощь с входом"), callback_data="login_help")],
+        [InlineKeyboardButton(text=_blue("🚪 Выйти из аккаунта"), callback_data=f"logout_{phone_clean}")],
+        [InlineKeyboardButton(text=_blue("🛒 В каталог"), callback_data="buy")],
+        [InlineKeyboardButton(text=_blue("🏠 В меню"), callback_data="back")],
+    ])
+
+
+def logout_account_keyboard(phone_clean: str):
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=_blue("🚪 Выйти из аккаунта"), callback_data=f"logout_{phone_clean}")],
+        [InlineKeyboardButton(text=_blue("🛒 В каталог"), callback_data="buy")],
+        [InlineKeyboardButton(text=_blue("🏠 В меню"), callback_data="back")],
+    ])
+
+
 def subscribe_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=_blue("📢 Перейти в канал"), url=CHANNEL_URL)],
