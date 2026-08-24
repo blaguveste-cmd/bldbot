@@ -5,6 +5,7 @@ from pathlib import Path
 from telethon import TelegramClient
 
 from config import API_ID, API_HASH
+from database import find_account_session
 
 BASE_DIR = Path(__file__).resolve().parent
 ACCOUNTS_DIR = BASE_DIR / "accounts"
@@ -21,9 +22,9 @@ async def check_session_alive(phone_clean: str, timeout: int = 20) -> bool:
     Быстрая проверка: сессия существует и авторизована.
     Возвращает True, если аккаунт живой.
     """
-    session_path = _session_path(phone_clean)
-    if not __import__("os").path.exists(session_path):
-        print(f"⚠️ Сессия не найдена: {session_path}")
+    session_path = find_account_session(phone_clean)
+    if not session_path:
+        print(f"⚠️ Сессия не найдена: +{phone_clean}")
         return False
 
     client = TelegramClient(session_path, API_ID, API_HASH)
@@ -52,7 +53,10 @@ async def listen_for_telegram_code(phone_clean: str, timeout: int = 150) -> str:
     Подключается к сессии и ждет код авторизации от Telegram (777000).
     Принимает код ТОЛЬКО если сообщение пришло в течение последних секунд.
     """
-    session_path = _session_path(phone_clean)
+    session_path = find_account_session(phone_clean)
+    if not session_path:
+        print(f"⚠️ Сессия +{phone_clean} не найдена!")
+        return ""
     client = TelegramClient(session_path, API_ID, API_HASH)
 
     try:

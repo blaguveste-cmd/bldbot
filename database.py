@@ -838,3 +838,57 @@ def add_star_gift(user_id, stars, gift_key=None):
     db.commit()
 
     return (request_id, target_rub, target_stars), newly_credited, received_stars, completed, False
+
+
+# =====================
+# USER ACCOUNTS
+# =====================
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS user_accounts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    phone TEXT NOT NULL,
+    product_id INTEGER,
+    role TEXT DEFAULT 'buyer',
+    created_at TEXT NOT NULL
+)
+""")
+db.commit()
+
+
+def add_user_account(user_id: int, phone: str, product_id: int | None = None, role: str = "buyer") -> None:
+    cursor.execute(
+        "INSERT INTO user_accounts(user_id, phone, product_id, role, created_at) VALUES(?,?,?,?,?)",
+        (user_id, phone, product_id, role, datetime.utcnow().isoformat())
+    )
+    db.commit()
+
+
+def get_user_accounts(user_id: int):
+    cursor.execute(
+        "SELECT id, phone, product_id, role, created_at FROM user_accounts WHERE user_id=? ORDER BY id DESC",
+        (user_id,)
+    )
+    return [dict(row) for row in cursor.fetchall()]
+
+
+def remove_user_account(user_id: int, phone: str) -> bool:
+    cursor.execute(
+        "DELETE FROM user_accounts WHERE user_id=? AND phone=?",
+        (user_id, phone)
+    )
+    db.commit()
+    return cursor.rowcount > 0
+
+
+def find_account_session(phone: str) -> str | None:
+    from pathlib import Path
+    from config import BASE_DIR
+    accounts_dir = BASE_DIR / "accounts"
+    sold_dir = BASE_DIR / "sold_accounts"
+    for directory in (sold_dir, accounts_dir):
+        session = directory / f"{phone}.session"
+        if session.exists():
+            return str(session)
+    return None

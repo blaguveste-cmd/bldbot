@@ -416,6 +416,25 @@ def login_help_text() -> str:
     )
 
 
+def my_purchases_text(accounts) -> str:
+    if not accounts:
+        return "<b>📦 Мои покупки</b>\n\nУ вас пока нет покупок."
+    lines = ["<b>📦 Мои покупки</b>\n\n"]
+    for account in accounts:
+        phone = account["phone"]
+        role = "Покупатель" if account["role"] == "buyer" else "Получатель подарка"
+        lines.append(f"📱 <code>+{phone}</code> — {role}\n")
+    return "\n".join(lines)
+
+
+def my_account_detail_text(phone: str) -> str:
+    return (
+        f"📱 <b>Аккаунт</b> <code>+{phone}</code>\n\n"
+        "Нажмите «Получить код», чтобы бот перехватил код из Telegram.\n"
+        "Код можно запрашивать много раз, пока сессия активна."
+    )
+
+
 def purchase_failed_text(reason: str | None = None) -> str:
     text = (
         "❌ <b><i>Не удалось оформить покупку</i></b>\n\n"

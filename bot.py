@@ -36,7 +36,7 @@ from keyboards import (
     main_keyboard, back_keyboard, products_keyboard, buy_product_keyboard,
     admin_keyboard, delete_keyboard, deposit_methods_keyboard, pay_invoice_keyboard,
     admin_manual_payment_keyboard, after_purchase_keyboard, subscribe_keyboard,
-    logout_account_keyboard, purchase_flow_keyboard,
+    logout_account_keyboard, purchase_flow_keyboard, account_actions_keyboard, my_purchases_keyboard,
 )
 import texts as t
 
@@ -50,6 +50,7 @@ from database import (
     create_manual_payment, get_manual_payment, approve_manual_payment, reject_manual_payment,
     add_getsms_order, get_getsms_order, get_user_getsms_orders, update_getsms_order,
     get_all_user_ids,
+    add_user_account, get_user_accounts, remove_user_account, find_account_session,
 )
 from cryptobot import create_invoice, check_invoice
 
@@ -381,9 +382,11 @@ async def cmd_catalog(message: Message):
 
 @dp.message(Command("orders"))
 async def cmd_orders(message: Message):
+    user_id = message.from_user.id
+    accounts = get_user_accounts(user_id)
     await message.answer(
-        t.orders_text(get_orders(message.from_user.id)),
-        reply_markup=back_keyboard,
+        t.my_purchases_text(accounts),
+        reply_markup=my_purchases_keyboard(accounts),
     )
 
 
@@ -579,6 +582,7 @@ async def buy_product(callback: CallbackQuery, state: FSMContext):
             try:
                 sell_product(product_id)
                 add_order(user_id, product_id)
+                add_user_account(user_id, phone_clean, product_id, "buyer")
 
                 log(f"🛒 ПОКУПКА | user={user_id} (@{callback.from_user.username}) | {title} | +{phone_clean} | {product_price}₽")
 
@@ -745,6 +749,7 @@ async def gift_recipient(message: Message, state: FSMContext):
             try:
                 sell_product(product_id)
                 add_order(user_id, product_id)
+                add_user_account(recipient_id, phone_clean, product_id, "recipient")
 
                 log(
                     f"🎁 ПОДАРОК | user={user_id} (@{message.from_user.username}) "
@@ -1482,17 +1487,6 @@ async def manual_reject(callback: CallbackQuery):
         await callback.answer("Ошибка при отклонении", show_alert=True)
 
 
-@dp.callback_query(F.data == "orders")
-async def orders(callback: CallbackQuery):
-    await show_section(
-        callback,
-        t.orders_text(get_orders(callback.from_user.id)),
-        back_keyboard,
-        section="orders",
-    )
-    await callback.answer()
-
-
 @dp.callback_query(F.data == "support")
 async def support(callback: CallbackQuery):
     await show_section(callback, t.support_text(), back_keyboard, section="support")
@@ -1524,6 +1518,74 @@ async def back(callback: CallbackQuery):
     await callback.answer()
 
 
+@dp.callback_query(F.data == "orders")
+async def my_purchases(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    accounts = get_user_accounts(user_id)
+    if not accounts:
+        await safe_edit(
+            callback,
+            "<b>📦 Мои покупки</b>\n\nУ вас пока нет покупок.",
+            back_keyboard,
+        )
+        await callback.answer()
+        return
+    await safe_edit(
+        callback,
+        t.my_purchases_text(accounts),
+        my_purchases_keyboard(accounts),
+    )
+    await callback.answer()
+
+
+@dp.callback_query(F.data.startswith("my_account_"))
+async def my_account_detail(callback: CallbackQuery):
+    phone_clean = callback.data.split("_", 2)[2]
+    await safe_edit(
+        callback,
+        t.my_account_detail_text(phone_clean),
+        account_actions_keyboard(phone_clean),
+    )
+    await callback.answer()
+
+
+@dp.callback_query(F.data.startswith("request_code_"))
+async def request_code(callback: CallbackQuery):
+    phone_clean = callback.data.split("_", 2)[2]
+    session_path = find_account_session(phone_clean)
+    if not session_path:
+        await callback.answer(
+            "❌ Сессия не найдена. Аккаунт был сброшен или удалён.",
+            show_alert=True
+        )
+        return
+    await callback.answer("⏳ Ждём код из Telegram...", show_alert=False)
+    try:
+        code = await listen_for_telegram_code(phone_clean)
+    except asyncio.TimeoutError:
+        code = ""
+    except Exception as e:
+        code = ""
+        log(f"❌ ОШИБКА ПЕРЕХВАТА КОДА (request) | +{phone_clean} | {type(e).__name__}: {e}")
+    if code:
+        try:
+            await callback.message.answer(
+                f"✅ <b>Код получен</b>\n\n"
+                f"📱 <code>+{phone_clean}</code>\n"
+                f"🔢 <code>{code}</code>",
+                reply_markup=account_actions_keyboard(phone_clean),
+            )
+        except Exception:
+            pass
+    else:
+        await callback.message.answer(
+            "⏰ <b>Код не получен</b>\n\n"
+            "Попробуйте запросить код снова через несколько секунд.\n"
+            "Убедитесь, что на аккаунте нет активных ограничений.",
+            reply_markup=account_actions_keyboard(phone_clean),
+        )
+
+
 @dp.callback_query(F.data == "login_help")
 async def login_help(callback: CallbackQuery):
     await callback.message.answer(t.login_help_text())
@@ -1543,6 +1605,7 @@ async def logout_account(callback: CallbackQuery):
         if os.path.exists(session_file):
             os.remove(session_file)
             removed = True
+        remove_user_account(callback.from_user.id, phone_clean)
         if removed:
             await callback.answer("✅ Выход из аккаунта выполнен.", show_alert=True)
             await callback.message.edit_text(

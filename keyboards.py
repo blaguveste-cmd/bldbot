@@ -125,6 +125,28 @@ def logout_account_keyboard(phone_clean: str):
     ])
 
 
+def account_actions_keyboard(phone_clean: str):
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=_blue("🔄 Получить код"), callback_data=f"request_code_{phone_clean}")],
+        [InlineKeyboardButton(text=_blue("🚪 Выйти из аккаунта"), callback_data=f"logout_{phone_clean}")],
+        [InlineKeyboardButton(text=_blue("◀️ Назад"), callback_data="orders")],
+    ])
+
+
+def my_purchases_keyboard(accounts):
+    buttons = []
+    for account in accounts:
+        phone = account["phone"]
+        buttons.append([
+            InlineKeyboardButton(
+                text=f"📱 {phone}",
+                callback_data=f"my_account_{phone}",
+            )
+        ])
+    buttons.append([InlineKeyboardButton(text=_blue("◀️ Назад"), callback_data="back")])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
 def subscribe_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=_blue("📢 Перейти в канал"), url=CHANNEL_URL)],
