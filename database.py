@@ -1,9 +1,14 @@
 import sqlite3
+import os
+from pathlib import Path
 
 from config import STARS_RATE
 
+PERSISTENT_DATA_DIR = Path("/app/data")
+PERSISTENT_DATA_DIR.mkdir(parents=True, exist_ok=True)
+DB_PATH = str(PERSISTENT_DATA_DIR / "shop.db")
 
-db = sqlite3.connect("shop.db")
+db = sqlite3.connect(DB_PATH)
 
 cursor = db.cursor()
 

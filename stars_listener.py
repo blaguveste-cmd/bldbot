@@ -13,6 +13,30 @@ from database import add_balance, add_star_gift, get_pending_star_request
 
 BASE_DIR = Path(__file__).resolve().parent
 ACCOUNTS_DIR = BASE_DIR / "accounts"
+LISTENER_PID_FILE = BASE_DIR / ".stars_listener.pid"
+
+
+def _acquire_listener_lock() -> bool:
+    if LISTENER_PID_FILE.exists():
+        try:
+            old_pid = int(LISTENER_PID_FILE.read_text().strip())
+            if old_pid and os.path.exists(f"/proc/{old_pid}"):
+                logging.getLogger("stars_listener").warning(
+                    "Stars listener already running with PID %s. Exiting.", old_pid
+                )
+                return False
+        except Exception:
+            pass
+    LISTENER_PID_FILE.write_text(str(os.getpid()))
+    return True
+
+
+def _release_listener_lock():
+    try:
+        if LISTENER_PID_FILE.exists():
+            LISTENER_PID_FILE.unlink()
+    except Exception:
+        pass
 
 
 def _relayer_session_path() -> str:
@@ -342,30 +366,36 @@ async def start_stars_listener(bot: Bot):
 
 
 async def run_stars_listener_forever(bot: Bot):
-    while True:
-        client = None
-        try:
-            client = await start_stars_listener(bot)
+    if not _acquire_listener_lock():
+        log.warning("Не удалось запустить stars listener: уже запущен.")
+        return
+    try:
+        while True:
+            client = None
+            try:
+                client = await start_stars_listener(bot)
 
-            if client is None:
-                await asyncio.sleep(15)
-                continue
+                if client is None:
+                    await asyncio.sleep(15)
+                    continue
 
-            await client.run_until_disconnected()
+                await client.run_until_disconnected()
 
-        except asyncio.CancelledError:
-            if client:
-                await client.disconnect()
-            raise
-
-        except Exception:
-            log.exception("❌ Stars listener остановился, повтор через 5 секунд")
-
-        finally:
-            if client:
-                try:
+            except asyncio.CancelledError:
+                if client:
                     await client.disconnect()
-                except Exception:
-                    pass
+                raise
 
-        await asyncio.sleep(5)
+            except Exception:
+                log.exception("❌ Stars listener остановился, повтор через 5 секунд")
+
+            finally:
+                if client:
+                    try:
+                        await client.disconnect()
+                    except Exception:
+                        pass
+
+            await asyncio.sleep(5)
+    finally:
+        _release_listener_lock()
