@@ -250,7 +250,15 @@ async def start_stars_listener(bot: Bot):
         return None
 
     client = TelegramClient(session_path, API_ID, API_HASH)
-    await client.connect()
+    try:
+        await client.connect()
+    except Exception as e:
+        from telethon.errors import AuthKeyDuplicatedError
+        if isinstance(e, AuthKeyDuplicatedError):
+            log.error("❌ AuthKeyDuplicatedError: сессия релеера используется с двух IP. Повтор через 60 секунд.")
+        else:
+            log.error("❌ Ошибка подключения релеера: %s", e)
+        return None
 
     if not await client.is_user_authorized():
         log.error("❌ Сессия релеера не авторизована.")
@@ -387,7 +395,7 @@ async def run_stars_listener_forever(bot: Bot):
                 raise
 
             except Exception:
-                log.exception("❌ Stars listener остановился, повтор через 5 секунд")
+                log.exception("❌ Stars listener остановился, повтор через 30 секунд")
 
             finally:
                 if client:
@@ -396,6 +404,6 @@ async def run_stars_listener_forever(bot: Bot):
                     except Exception:
                         pass
 
-            await asyncio.sleep(5)
+            await asyncio.sleep(30)
     finally:
         _release_listener_lock()

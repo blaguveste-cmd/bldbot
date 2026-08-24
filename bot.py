@@ -787,7 +787,7 @@ async def gift_recipient(message: Message, state: FSMContext):
                 except Exception as e:
                     log(f"⚠️ Не удалось переместить сессию {phone_clean}: {e}")
             except Exception as e:
-                log(f"❌ ОШИБКА ФИНАЛИЗАЦИИ ПОДАРКА | user={user_id} | product={product_id} | {type(e).__name__}: {e}")
+                log.exception("❌ ОШИБКА ФИНАЛИЗАЦИИ ПОДАРКА | user=%s | product=%s", user_id, product_id)
                 add_balance(user_id, product_price)
                 await message.answer("❌ <b>Ошибка при оформлении подарка</b>\nСредства возвращены на баланс.")
         else:
