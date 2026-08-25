@@ -1704,23 +1704,7 @@ async def main():
 
     asyncio.create_task(check_payments())
     asyncio.create_task(cleanup_loop())
-
-    # Слушатель входящих Star Gifts на релеере
-    from stars_listener import run_stars_listener_forever
-    stars_task = asyncio.create_task(run_stars_listener_forever(bot))
-
-    def _stars_task_done(task):
-        try:
-            task.result()
-        except asyncio.CancelledError:
-            pass
-        except Exception:
-            log("❌ STARS LISTENER CRASH")
-            import traceback
-            traceback.print_exc()
-
-    stars_task.add_done_callback(_stars_task_done)
-    print("⭐ Stars listener: задача запущена.")
+    print("✅ Бот запущен. Stars listener должен запускаться отдельным процессом.")
 
     await cleanup_old_sessions(days=7)
     await dp.start_polling(bot)
