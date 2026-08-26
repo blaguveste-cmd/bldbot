@@ -1610,13 +1610,20 @@ async def logout_account(callback: CallbackQuery):
     session_file = _session_path(phone_clean)
     sold_file = _sold_session_path(phone_clean)
     removed = False
+    errors = []
     try:
-        if os.path.exists(sold_file):
-            os.remove(sold_file)
-            removed = True
-        if os.path.exists(session_file):
-            os.remove(session_file)
-            removed = True
+        targets = [sold_file, session_file]
+        for target in targets:
+            if os.path.exists(target):
+                try:
+                    os.remove(target)
+                    removed = True
+                    log(f"🗑 Удалён файл сессии: {target}")
+                except Exception as e:
+                    errors.append(f"{target}: {e}")
+                    log(f"❌ Не удалось удалить {target}: {e}")
+            else:
+                log(f"ℹ️ Файл не найден: {target}")
         remove_user_account(callback.from_user.id, phone_clean)
         if removed:
             await callback.answer("✅ Выход из аккаунта выполнен.", show_alert=True)
@@ -1635,6 +1642,7 @@ async def logout_account(callback: CallbackQuery):
                 reply_markup=main_keyboard,
             )
     except Exception as e:
+        log(f"❌ ОШИБКА ВЫХОДА ИЗ АККАУНТА | +{phone_clean} | {type(e).__name__}: {e}")
         await callback.answer(f"Ошибка: {e}", show_alert=True)
 
 
