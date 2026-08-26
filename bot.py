@@ -1,6 +1,7 @@
 import asyncio
 import os
 import time
+import logging
 from datetime import datetime
 from pathlib import Path
 from aiogram import Bot, Dispatcher, F
@@ -16,6 +17,12 @@ from aiogram.fsm.storage.memory import MemoryStorage
 BASE_DIR = Path(__file__).resolve().parent
 ACCOUNTS_DIR = BASE_DIR / "accounts"
 SOLD_ACCOUNTS_DIR = BASE_DIR / "sold_accounts"
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+log = logging.getLogger("bot")
 
 
 def _session_path(phone_clean: str) -> str:
