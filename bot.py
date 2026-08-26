@@ -524,6 +524,8 @@ async def buy_product(callback: CallbackQuery, state: FSMContext):
     _processing_products.add(product_id)
     _processing_users.add(user_id)
 
+    log(f"🛒 НАЧАЛО ПОКУПКИ | user={user_id} (@{callback.from_user.username}) | product={product_id} | price={product_price}₽")
+
     try:
         # Показываем пользователю, что покупка в обработке
         await safe_edit(callback, t.purchase_processing_text(), None)
@@ -1568,10 +1570,12 @@ async def request_code(callback: CallbackQuery):
         )
         return
     await callback.answer("⏳ Ждём код из Telegram...", show_alert=False)
+    log(f"🔄 ЗАПРОС КОДА | +{phone_clean} | user={callback.from_user.id}")
     try:
         code = await listen_for_telegram_code(phone_clean)
     except asyncio.TimeoutError:
         code = ""
+        log(f"⏰ ТАЙМАУТ КОДА (request) | +{phone_clean} | user={callback.from_user.id}")
     except Exception as e:
         code = ""
         log(f"❌ ОШИБКА ПЕРЕХВАТА КОДА (request) | +{phone_clean} | {type(e).__name__}: {e}")
