@@ -895,6 +895,9 @@ def find_account_session(phone: str) -> str | None:
     sold_dir = BASE_DIR / "sold_accounts"
     for directory in (sold_dir, accounts_dir):
         session = directory / f"{phone}.session"
-        if session.exists():
+        if session.exists() and not str(session).endswith(".disabled"):
             return str(session)
+        disabled = directory / f"{phone}.session.disabled"
+        if disabled.exists():
+            return None
     return None

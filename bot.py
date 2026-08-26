@@ -1616,12 +1616,13 @@ async def logout_account(callback: CallbackQuery):
         for target in targets:
             if os.path.exists(target):
                 try:
-                    os.remove(target)
+                    disabled = target + ".disabled"
+                    os.rename(target, disabled)
                     removed = True
-                    log(f"🗑 Удалён файл сессии: {target}")
+                    log(f"🗑 Сессия отключена: {target} -> {disabled}")
                 except Exception as e:
                     errors.append(f"{target}: {e}")
-                    log(f"❌ Не удалось удалить {target}: {e}")
+                    log(f"❌ Не удалось отключить {target}: {e}")
             else:
                 log(f"ℹ️ Файл не найден: {target}")
         remove_user_account(callback.from_user.id, phone_clean)
