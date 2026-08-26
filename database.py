@@ -1,5 +1,6 @@
 import sqlite3
 import os
+from datetime import datetime
 from pathlib import Path
 
 from config import STARS_RATE
