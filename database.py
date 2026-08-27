@@ -770,6 +770,25 @@ def get_pending_star_request(user_id):
     return cursor.fetchone()
 
 
+def get_all_pending_star_requests():
+    cursor.execute("""
+        SELECT id, user_id, target_rub, target_stars, received_stars, credited_rub, status
+        FROM star_requests
+        WHERE status='pending'
+    """)
+    return cursor.fetchall()
+
+
+def complete_star_request(request_id, credited_rub):
+    cursor.execute("""
+        UPDATE star_requests
+        SET status='completed', credited_rub=?
+        WHERE id=? AND status='pending'
+    """, (credited_rub, request_id))
+    db.commit()
+    return cursor.rowcount > 0
+
+
 def get_last_star_request(user_id):
     cursor.execute("""
         SELECT id, user_id, target_rub, target_stars, received_stars, credited_rub, status

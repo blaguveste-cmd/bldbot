@@ -25,6 +25,28 @@ logging.basicConfig(
 log = logging.getLogger("bot")
 
 
+async def telethon_logout_account(phone_clean: str) -> tuple[bool, str]:
+    from config import API_ID, API_HASH
+    from database import find_account_session
+    session_path = find_account_session(phone_clean)
+    if not session_path:
+        return False, "Сессия не найдена"
+    client = TelegramClient(session_path, API_ID, API_HASH)
+    try:
+        await client.connect()
+        if await client.is_user_authorized():
+            await client.log_out()
+            return True, "ok"
+        return False, "Сессия не авторизована"
+    except Exception as e:
+        return False, f"{type(e).__name__}: {e}"
+    finally:
+        try:
+            await client.disconnect()
+        except Exception:
+            pass
+
+
 def _session_path(phone_clean: str) -> str:
     if not ACCOUNTS_DIR.exists():
         ACCOUNTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -37,6 +59,8 @@ def _sold_session_path(phone_clean: str) -> str:
     return str(SOLD_ACCOUNTS_DIR / f"{phone_clean}.session")
 
 from telegram_auth import listen_for_telegram_code, check_session_alive, send_login_code, sign_in_with_code
+from telethon import TelegramClient
+from telethon.errors import SessionPasswordNeededError
 from database import get_pending_payments
 from config import BOT_TOKEN, ADMIN_ID, RUB_PAYMENT_DETAILS, STARS_RATE, RELAYER_USERNAME, REFUND_PERCENT
 from states import AdminStates, PaymentStates, GiftStates, TransferStates
@@ -58,6 +82,7 @@ from database import (
     create_manual_payment, get_manual_payment, approve_manual_payment, reject_manual_payment,
     add_getsms_order, get_getsms_order, get_user_getsms_orders, update_getsms_order,
     get_all_user_ids,
+    get_all_pending_star_requests, complete_star_request, _stars_to_rubles,
     add_user_account, get_user_accounts, remove_user_account, find_account_session,
 )
 from cryptobot import create_invoice, check_invoice
@@ -272,16 +297,25 @@ async def set_user_balance(message: Message):
         args = message.text.split()
         user_id = int(args[1])
         amount = int(args[2])
+        if amount == 0:
+            await message.answer("<b>❌ Сумма не может быть 0.</b>")
+            return
+        old_balance = get_balance(user_id)
         add_balance(user_id, amount)
-        await message.answer(
-            f"<b>✅ Баланс пользователя <code>{user_id}</code> изменён на {t.fmt_money(amount)}</b>"
-        )
+        new_balance = get_balance(user_id)
+        if amount > 0:
+            log_text = f"✅ Баланс пользователя <code>{user_id}</code> пополнен на {t.fmt_money(amount)}"
+            user_text = t.balance_topup_text(amount)
+        else:
+            log_text = f"✅ Баланс пользователя <code>{user_id}</code> уменьшен на {t.fmt_money(abs(amount))}"
+            user_text = f"<b>⚠️ Ваш баланс уменьшен на {t.fmt_money(abs(amount))}</b>\nНовый баланс: <b>{t.fmt_money(new_balance)}</b>"
+        await message.answer(f"<b>{log_text}</b>\nБыло: <code>{t.fmt_money(old_balance)}</code> | Стало: <code>{t.fmt_money(new_balance)}</code>")
         try:
-            await bot.send_message(chat_id=user_id, text=t.balance_topup_text(amount))
+            await bot.send_message(chat_id=user_id, text=user_text)
         except Exception:
             pass
     except Exception:
-        await message.answer("<b>❌ Формат:</b>\n<code>/setbal ID СУММА</code>")
+        await message.answer("<b>❌ Формат:</b>\n<code>/setbal ID СУММА</code>\nОтрицательная сумма — списание.")
 
 
 @dp.message(Command("star_test"))
@@ -1612,17 +1646,18 @@ async def logout_account(callback: CallbackQuery):
     removed = False
     errors = []
     try:
+        ok, msg = await telethon_logout_account(phone_clean)
+        log(f"🔌 LOGOUT TELEGRAM | +{phone_clean} | {ok} | {msg}")
         targets = [sold_file, session_file]
         for target in targets:
             if os.path.exists(target):
                 try:
-                    disabled = target + ".disabled"
-                    os.rename(target, disabled)
+                    os.remove(target)
                     removed = True
-                    log(f"🗑 Сессия отключена: {target} -> {disabled}")
+                    log(f"🗑 Удалён файл сессии: {target}")
                 except Exception as e:
                     errors.append(f"{target}: {e}")
-                    log(f"❌ Не удалось отключить {target}: {e}")
+                    log(f"❌ Не удалось удалить {target}: {e}")
             else:
                 log(f"ℹ️ Файл не найден: {target}")
         remove_user_account(callback.from_user.id, phone_clean)
@@ -1670,6 +1705,27 @@ async def check_payments():
                         log(f"⚠️ Не удалось уведомить user={user_id}: {e}")
         except Exception as e:
             print(f"Ошибка в цикле CryptoBot: {e}")
+
+        try:
+            star_requests = get_all_pending_star_requests()
+            for request in star_requests:
+                req_id, user_id, target_rub, target_stars, received_stars, credited_rub, status = request
+                if received_stars is None:
+                    received_stars = 0
+                if received_stars >= target_stars:
+                    rub = _stars_to_rubles(received_stars)
+                    if rub > 0 and complete_star_request(req_id, rub):
+                        add_balance(user_id, rub)
+                        log(f"⭐ STARS | user={user_id} | +{rub}₽ | received={received_stars} | request={req_id}")
+                        try:
+                            await bot.send_message(
+                                chat_id=user_id,
+                                text=t.balance_topup_text(rub),
+                            )
+                        except Exception as e:
+                            log(f"⚠️ Не удалось уведомить star user={user_id}: {e}")
+        except Exception as e:
+            print(f"Ошибка в цикле Stars: {e}")
 
 
 async def cleanup_old_sessions(days: int = 7):
