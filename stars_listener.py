@@ -255,7 +255,8 @@ async def start_stars_listener(bot: Bot):
     except Exception as e:
         from telethon.errors import AuthKeyDuplicatedError
         if isinstance(e, AuthKeyDuplicatedError):
-            log.error("❌ AuthKeyDuplicatedError: сессия релеера используется с двух IP. Повтор через 60 секунд.")
+            log.error("❌ AuthKeyDuplicatedError: сессия релеера используется с двух IP. Жду 60 секунд и повторю.")
+            await asyncio.sleep(60)
         else:
             log.error("❌ Ошибка подключения релеера: %s", e)
         return None
@@ -407,3 +408,24 @@ async def run_stars_listener_forever(bot: Bot):
             await asyncio.sleep(30)
     finally:
         _release_listener_lock()
+
+
+if __name__ == "__main__":
+    import sys
+    from aiogram import Bot as AiogramBot
+    from aiogram.client.default import DefaultBotProperties
+    from aiogram.enums import ParseMode
+    from config import BOT_TOKEN
+
+    if not BOT_TOKEN:
+        print("ERROR: BOT_TOKEN is not set.")
+        sys.exit(1)
+
+    bot = AiogramBot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+
+    try:
+        asyncio.run(run_stars_listener_forever(bot))
+    except KeyboardInterrupt:
+        pass
+    finally:
+        asyncio.run(bot.session.close())

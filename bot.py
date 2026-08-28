@@ -86,7 +86,6 @@ from database import (
     add_user_account, get_user_accounts, remove_user_account, find_account_session,
 )
 from cryptobot import create_invoice, check_invoice
-from stars_listener import run_stars_listener_forever
 
 
 if not BOT_TOKEN:
@@ -1779,8 +1778,7 @@ async def main():
 
     asyncio.create_task(check_payments())
     asyncio.create_task(cleanup_loop())
-    asyncio.create_task(run_stars_listener_forever(bot))
-    print("✅ Бот запущен. Stars listener запущен в фоне.")
+    print("✅ Бот запущен. Stars listener должен запускаться отдельным процессом.")
 
     await cleanup_old_sessions(days=7)
     await dp.start_polling(bot)
