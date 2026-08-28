@@ -86,6 +86,7 @@ from database import (
     add_user_account, get_user_accounts, remove_user_account, find_account_session,
 )
 from cryptobot import create_invoice, check_invoice
+from stars_listener import run_stars_listener_forever
 
 
 if not BOT_TOKEN:
@@ -593,10 +594,10 @@ async def buy_product(callback: CallbackQuery, state: FSMContext):
         # Оповещаем пользователя и админа о попытке покупки, но не фиксируем продажу до получения кода
         await safe_edit(
             callback,
-            f"⏳ <b>Покупка в процессе</b>\n\n"
-            f"📱 Номер: <code>+{phone_clean}</code>\n\n"
-            f"<i>Сессия проверена. Открой Telegram, введи этот номер и запроси код. Ждём код...</i>",
-            purchase_flow_keyboard(phone_clean),
+            "⏳ <b>Покупка в процессе</b>\n\n"
+            "Обрабатываем платёж и подготавливаем аккаунт.\n"
+            "Пожалуйста, подожди несколько секунд.",
+            None,
         )
         await callback.answer()
 
@@ -698,7 +699,7 @@ async def gift_recipient(message: Message, state: FSMContext):
 
     product = get_product(product_id)
     if not product or product[5] == 1:
-        await message.answer("<b>❌ Товар уже продан или не найден.</b>")
+        await message.answer("❌ <b>Товар уже продан или не найден.</b>")
         await state.clear()
         return
 
@@ -706,16 +707,16 @@ async def gift_recipient(message: Message, state: FSMContext):
     product_price = product[3]
     balance = get_balance(user_id)
     if balance < product_price:
-        await message.answer("<b>❌ Недостаточно средств на балансе.</b>")
+        await message.answer("❌ <b>Недостаточно средств.</b>")
         await state.clear()
         return
 
     if not message.text:
-        await message.answer("<b>❌ Введи username получателя.</b>")
+        await message.answer("❌ <b>Введи username получателя.</b>")
         return
     recipient_input = message.text.strip()
     if not recipient_input:
-        await message.answer("<b>❌ Введи username получателя.</b>")
+        await message.answer("❌ <b>Введи username получателя.</b>")
         return
 
     if recipient_input.startswith("@"):
@@ -733,8 +734,8 @@ async def gift_recipient(message: Message, state: FSMContext):
 
     if recipient_id is None:
         await message.answer(
-            "<b>❌ Не удалось найти получателя.</b>\n"
-            "Убедись, что он правильно ввёл username и начал диалог с ботом."
+            "❌ <b>Не удалось найти получателя.</b>\n"
+            "Убедись, что он начал диалог с ботом."
         )
         return
     _processing_products.add(product_id)
@@ -833,7 +834,7 @@ async def gift_recipient(message: Message, state: FSMContext):
             except Exception as e:
                 log.exception("❌ ОШИБКА ФИНАЛИЗАЦИИ ПОДАРКА | user=%s | product=%s", user_id, product_id)
                 add_balance(user_id, product_price)
-                await message.answer("❌ <b>Ошибка при оформлении подарка</b>\nСредства возвращены на баланс.")
+                await message.answer("❌ <b>Ошибка при оформлении подарка</b>\nСредства возвращены.")
         else:
             # В случае таймаута кода не фиксируем продажу — возвращаем деньги и оставляем товар в каталоге
             add_balance(user_id, product_price)
@@ -853,38 +854,38 @@ async def add_product_start(callback: CallbackQuery, state: FSMContext):
     if callback.from_user.id != ADMIN_ID:
         return
     await state.set_state(AdminStates.title)
-    await callback.message.answer("<b>Введите название товара:</b>")
+    await callback.message.answer("<b>Название товара:</b>")
     await callback.answer()
 
 
 @dp.message(AdminStates.title)
 async def product_title(message: Message, state: FSMContext):
     if not message.text:
-        await message.answer("<b>❌ Введите название текстом.</b>")
+        await message.answer("❌ <b>Название текстом.</b>")
         return
     await state.update_data(title=message.text)
     await state.set_state(AdminStates.description)
-    await message.answer("<b>Введите описание:</b>")
+    await message.answer("<b>Описание:</b>")
 
 
 @dp.message(AdminStates.description)
 async def product_description(message: Message, state: FSMContext):
     if not message.text:
-        await message.answer("<b>❌ Введите описание текстом.</b>")
+        await message.answer("❌ <b>Описание текстом.</b>")
         return
     await state.update_data(description=message.text)
     await state.set_state(AdminStates.price)
-    await message.answer("<b>Введите цену:</b>")
+    await message.answer("<b>Цена:</b>")
 
 
 @dp.message(AdminStates.price)
 async def product_price(message: Message, state: FSMContext):
     if not message.text or not message.text.isdigit():
-        await message.answer("<b>❌ Введите число.</b>")
+        await message.answer("❌ <b>Введите число.</b>")
         return
     await state.update_data(price=int(message.text))
     await state.set_state(AdminStates.delivery_data)
-    await message.answer("<b>Введите данные для выдачи (номер телефона без +):</b>")
+    await message.answer("<b>Номер телефона (без +):</b>")
 
 
 @dp.message(AdminStates.delivery_data)
@@ -896,7 +897,7 @@ async def product_delivery(message: Message, state: FSMContext):
     phone_clean = "".join(filter(str.isdigit, message.text))
 
     if not phone_clean:
-        await message.answer("<b>❌ Введите номер телефона цифрами.</b>")
+        await message.answer("❌ <b>Номер цифрами.</b>")
         return
 
     try:
@@ -904,8 +905,8 @@ async def product_delivery(message: Message, state: FSMContext):
         await state.update_data(admin_phone=phone_clean, admin_phone_code_hash=phone_code_hash)
         await state.set_state(AdminStates.auth_code)
         await message.answer(
-            f"📱 Код отправлен на номер <code>+{phone_clean}</code>.\n"
-            "Введите код из Telegram (или отправьте <code>-</code> чтобы пропустить):"
+            "📱 Код отправлен на <code>+{phone_clean}</code>.\n"
+            "Введи код (или отправь <code>-</code>, чтобы пропустить):"
         )
     except Exception as e:
         await message.answer(
@@ -927,7 +928,7 @@ async def product_auth_code(message: Message, state: FSMContext):
 
     if message.text.strip() == "-":
         await state.set_state(AdminStates.photo)
-        await message.answer("⏭ Авторизация пропущена.\n<b>Пришли фото товара</b> (или отправь <code>-</code>, чтобы без фото):")
+        await message.answer("⏭ Авторизация пропущена.\n<b>Пришли фото товара</b> (или отправь <code>-</code>):")
         return
 
     data = await state.get_data()
@@ -945,7 +946,7 @@ async def product_auth_code(message: Message, state: FSMContext):
         await state.set_state(AdminStates.photo)
         await message.answer(
             f"✅ Аккаунт <code>+{phone_clean}</code> авторизован!\n"
-            "<b>Пришли фото товара</b> (или отправь <code>-</code>, чтобы без фото):"
+            "<b>Пришли фото товара</b> (или отправь <code>-</code>):"
         )
     except Exception as e:
         await message.answer(
@@ -965,9 +966,7 @@ async def product_photo(message: Message, state: FSMContext):
     elif message.text and message.text.strip() == "-":
         photo_id = None
     else:
-        await message.answer(
-            "<b>Пришли именно фото</b> или отправь <code>-</code>, чтобы пропустить."
-        )
+        await message.answer("<b>❌ Пришли фото или <code>-</code>.</b>")
         return
 
     add_product(
@@ -979,9 +978,9 @@ async def product_photo(message: Message, state: FSMContext):
     )
     await state.clear()
     if photo_id:
-        await message.answer("<b>✅ Товар добавлен с фото!</b>")
+        await message.answer("✅ <b>Товар добавлен!</b>")
     else:
-        await message.answer("<b>✅ Товар добавлен (без фото)!</b>")
+        await message.answer("✅ <b>Товар добавлен!</b>")
 
 
 @dp.callback_query(F.data == "delete_product")
@@ -992,7 +991,7 @@ async def delete_product_menu(callback: CallbackQuery):
     if not products:
         await callback.answer("Нет товаров для удаления", show_alert=True)
         return
-    await callback.message.answer("<b>Выберите товар для удаления:</b>", reply_markup=delete_keyboard(products))
+    await callback.message.answer("<b>🗑 Выбери товар:</b>", reply_markup=delete_keyboard(products))
     await callback.answer()
 
 
@@ -1027,11 +1026,11 @@ async def request_refund_start(callback: CallbackQuery, state: FSMContext):
 @dp.message(PaymentStates.refund_reason)
 async def refund_reason_handler(message: Message, state: FSMContext):
     if not message.text:
-        await message.answer("<b>❌ Напиши причину текстом.</b>")
+        await message.answer("❌ <b>Причина текстом.</b>")
         return
     reason = message.text.strip()
     if not reason:
-        await message.answer("<b>❌ Напиши причину текстом.</b>")
+        await message.answer("❌ <b>Причина текстом.</b>")
         return
     await _submit_refund_request(message.from_user.id, reason, message)
     await state.clear()
@@ -1221,12 +1220,12 @@ async def pay_crypto_start(callback: CallbackQuery, state: FSMContext):
 @dp.message(PaymentStates.amount)
 async def payment_amount(message: Message, state: FSMContext):
     if not message.text or not message.text.isdigit():
-        await message.answer("<b>❌ Введите число — сумму в рублях.</b>")
+        await message.answer("❌ <b>Сумма числом.</b>")
         return
 
     amount = int(message.text)
     if amount < 5:
-        await message.answer("<b>❌ Минимальная сумма пополнения — 5 ₽.</b>")
+        await message.answer("❌ <b>Минимум 5 ₽.</b>")
         return
 
     invoice = await create_invoice(amount)
@@ -1262,7 +1261,7 @@ async def stars_amount_handler(message: Message, state: FSMContext):
     try:
         amount = float(message.text.replace(',', '.').replace(' ', ''))
     except ValueError:
-        await message.answer("<b>❌ Введите сумму числом.</b>")
+        await message.answer("❌ <b>Сумма числом.</b>")
         return
 
     if amount <= 0:
@@ -1270,7 +1269,7 @@ async def stars_amount_handler(message: Message, state: FSMContext):
         return
 
     if amount < 15 / STARS_RATE:
-        await message.answer(f"<b>❌ Минимальная сумма — {15 / STARS_RATE:.2f} ₽ (15 ⭐).</b>")
+        await message.answer(f"❌ <b>Минимум {15 / STARS_RATE:.2f} ₽ (15 ⭐).</b>")
         return
 
     target_stars = max(15, int(((amount * STARS_RATE) + 4.999999) // 5) * 5)
@@ -1325,16 +1324,16 @@ async def transfer_amount_handler(message: Message, state: FSMContext):
     try:
         amount = int(message.text.replace(' ', ''))
     except ValueError:
-        await message.answer("<b>❌ Введите целое число.</b>")
+        await message.answer("❌ <b>Сумма целым числом.</b>")
         return
 
     if amount < 1:
-        await message.answer("<b>❌ Сумма должна быть не меньше 1 ₽.</b>")
+        await message.answer("<b>❌ Сумма меньше 1 ₽.</b>")
         return
 
     user_id = message.from_user.id
     if get_balance(user_id) < amount:
-        await message.answer("<b>❌ Недостаточно средств на балансе.</b>")
+        await message.answer("❌ <b>Недостаточно средств.</b>")
         return
 
     await state.update_data(transfer_amount=amount)
@@ -1347,7 +1346,7 @@ async def rubles_receipt_handler(message: Message, state: FSMContext):
     # Принимаем фото или документ (pdf/скрин)
     if not (message.photo or message.document):
         await message.answer(
-            "<b>❌ Пришли фото или файл чека.</b>\n"
+            "❌ <b>Пришли чек фото или файлом.</b>\n"
             "Или /start чтобы отменить."
         )
         return
@@ -1356,7 +1355,7 @@ async def rubles_receipt_handler(message: Message, state: FSMContext):
     amount = data.get("rubles_amount")
     if not amount:
         await state.clear()
-        await message.answer("<b>❌ Сессия сброшена. Начни пополнение заново.</b>")
+        await message.answer("❌ <b>Сессия сброшена. Начни заново.</b>")
         return
 
     user = message.from_user
@@ -1442,7 +1441,7 @@ async def transfer_recipient_handler(message: Message, state: FSMContext):
     amount = data.get("transfer_amount")
     if not amount:
         await state.clear()
-        await message.answer("<b>❌ Сессия перевода сброшена. Начни заново.</b>")
+        await message.answer("❌ <b>Сессия перевода сброшена. Начни заново.</b>")
         return
 
     if not message.text:
@@ -1479,11 +1478,11 @@ async def transfer_recipient_handler(message: Message, state: FSMContext):
     sender_id = message.from_user.id
 
     if recipient_id == sender_id:
-        await message.answer("<b>❌ Нельзя переводить себе.</b>")
+        await message.answer("❌ <b>Нельзя переводить себе.</b>")
         return
 
     if get_balance(sender_id) < amount:
-        await message.answer("<b>❌ Недостаточно средств на балансе.</b>")
+        await message.answer("❌ <b>Недостаточно средств.</b>")
         await state.clear()
         return
 
@@ -1616,7 +1615,7 @@ async def request_code(callback: CallbackQuery):
     if code:
         try:
             await callback.message.answer(
-                f"✅ <b>Код получен</b>\n\n"
+             "✅ <b>Код получен</b>\n\n"
                 f"📱 <code>+{phone_clean}</code>\n"
                 f"🔢 <code>{code}</code>",
                 reply_markup=account_actions_keyboard(phone_clean),
@@ -1780,7 +1779,8 @@ async def main():
 
     asyncio.create_task(check_payments())
     asyncio.create_task(cleanup_loop())
-    print("✅ Бот запущен. Stars listener должен запускаться отдельным процессом.")
+    asyncio.create_task(run_stars_listener_forever(bot))
+    print("✅ Бот запущен. Stars listener запущен в фоне.")
 
     await cleanup_old_sessions(days=7)
     await dp.start_polling(bot)

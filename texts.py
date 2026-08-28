@@ -12,62 +12,54 @@ def fmt_money(amount: int | float) -> str:
 def main_menu_text(balance: int, first_name: str | None = None) -> str:
     name = first_name or "друг"
     return (
-        f"🛍 <b><i>BLDSH ACCS</i></b>\n"
-        f"<i>Тут ты можешь купить готовые Telegram-аккаунты</i>\n\n"
+        f"🛍 <b>BLDSH ACCS</b>\n"
+        f"Готовые Telegram-аккаунты\n\n"
         f"Привет, <b>{name}</b>!\n"
         f"💰 Баланс: <code>{fmt_money(balance)}</code>\n\n"
-        f"<b>Выбери действие</b> ниже и начни покупку или подарок."
+        f"Выбери действие ниже:"
     )
 
 
 def catalog_text(count: int = 0) -> str:
     if count == 0:
-        return (
-            f"🛒 <b><i>Каталог</i></b>\n\n"
-            f"<b>Сейчас свободных аккаунтов нет.</b>\n"
-            f"<i>Новые товары появляются регулярно. Загляни позже.</i>"
-        )
-    return (
-        f"🛒 <b><i>Каталог</i></b>\n\n"
-        f"<b>Доступно:</b> <code>{count}</code> аккаунтов\n\n"
-        f"<i>Выбери нужный вариант ниже.</i>"
-    )
+        return "🛒 <b>Каталог</b>\n\nСейчас свободных аккаунтов нет.\nНовые товары появляются регулярно."
+    return f"🛒 <b>Каталог</b>\n\nДоступно: <code>{count}</code> аккаунтов\n\nВыбери вариант ниже:"
 
 
 def product_text(title: str, description: str, price: int) -> str:
     return (
-        f"📱 <b><i>{title}</i></b>\n\n"
+        f"📱 <b>{title}</b>\n\n"
         f"{description}\n\n"
         f"💵 <b>Цена:</b> <code>{fmt_money(price)}</code>\n\n"
-        f"<b>Что будет дальше:</b>\n"
-        f"1️⃣ Оплатишь товар\n"
-        f"2️⃣ Номер и код придут автоматически\n"
-        f"3️⃣ Код придёт в этот чат\n\n"
-        f"<i>Покупай или сделай подарок другу в пару кликов.</i>"
+        f"Что дальше:\n"
+        f"1. Оплатишь товар\n"
+        f"2. Номер и код придут автоматически\n"
+        f"3. Код придёт в этот чат\n\n"
+        f"Покупай или сделай подарок другу в пару кликов."
     )
 
 
 def gift_recipient_prompt() -> str:
     return (
-        "🎁 <b><i>Подарок другу</i></b>\n\n"
-        "Отправь <b>username</b> получателя.\n"
+        "🎁 <b>Подарок другу</b>\n\n"
+        "Отправь username получателя.\n"
         "Он должен уже начать диалог с ботом.\n\n"
-        "<b>Пример:</b> <code>@username</code>"
+        "Пример: <code>@username</code>"
     )
 
 
 def gift_purchase_success_text(recipient: str) -> str:
     return (
-        "✅ <b><i>Подарок оформлен</i></b>\n\n"
+        "✅ <b>Подарок оформлен</b>\n\n"
         f"Товар будет доставлен получателю: <b>{recipient}</b>.\n"
         "Номер и код придут ему автоматически.\n\n"
-        "<i>Если получатель не доступен, ты получишь сообщение с данными лично.</i>"
+        "Если получатель не доступен — ты получишь данные лично."
     )
 
 
 def gift_recipient_received_text(phone: str) -> str:
     return (
-        "🎁 <b><i>Тебе подарили аккаунт!</i></b>\n\n"
+        "🎁 <b>Тебе подарили аккаунт!</b>\n\n"
         f"📱 Номер: <code>+{phone}</code>\n\n"
         "Код придёт, как только он появится."
     )
@@ -75,40 +67,40 @@ def gift_recipient_received_text(phone: str) -> str:
 
 def gift_recipient_code_text(code: str) -> str:
     return (
-        "✅ <b><i>Код для подарка</i></b>\n\n"
+        "✅ <b>Код для подарка</b>\n\n"
         f"<code>{code}</code>\n\n"
-        "Отправь его получателю вместе с номером, если потребуется."
+        "Отправь его получателю вместе с номером."
     )
 
 
 def gift_recipient_unreachable_text(recipient: str) -> str:
     return (
-        "⚠️ <b><i>Не удалось доставить подарок</i></b>\n\n"
-        f"Пользователь <b>{recipient}</b> не доступен для сообщений.\n"
-        "Тебе придёт номер и код лично — перешли их вручную получателю."
+        "⚠️ <b>Не удалось доставить подарок</b>\n\n"
+        f"Пользователь <b>{recipient}</b> не доступен.\n"
+        "Ты получишь номер и код лично — перешли их получателю."
     )
 
 
 def profile_text(user_id: int, username: str | None, balance: int) -> str:
     uname = f"@{username}" if username else "—"
     return (
-        f"👤 <b><i>Профиль</i></b>\n\n"
-        f"🆔 <b>ID:</b> <code>{user_id}</code>\n"
-        f"🔗 <b>Username:</b> {uname}\n"
-        f"💰 <b>Баланс:</b> <code>{fmt_money(balance)}</code>\n\n"
-        f"<i>Используй баланс для покупки или подарков.</i>"
+        f"👤 <b>Профиль</b>\n\n"
+        f"🆔 ID: <code>{user_id}</code>\n"
+        f"🔗 Username: {uname}\n"
+        f"💰 Баланс: <code>{fmt_money(balance)}</code>\n\n"
+        f"Используй баланс для покупок и подарков."
     )
 
 
 def balance_menu_text() -> str:
     return (
-        f"💳 <b><i>Пополнение баланса</i></b>\n\n"
-        f"<b>Выбери способ пополнения:</b>\n\n"
-        f"💎 <b>Crypto Bot</b> — скорость + авто\n"
-        f"⭐ <b>Telegram Stars</b> — подарки в Telegram\n"
-        f"💵 <b>Рубли</b> — перевод вручную\n"
-        f"💱 <b>Перевести баланс</b> — отправить деньги другому пользователю\n\n"
-        f"<i>Баланс обновится автоматически после оплаты или перевода.</i>"
+        "💳 <b>Пополнение баланса</b>\n\n"
+        "Выбери способ:\n\n"
+        "💎 Crypto Bot — авто\n"
+        "⭐ Telegram Stars — подарки\n"
+        "💵 Рубли — перевод вручную\n"
+        "💱 Перевести — другому пользователю\n\n"
+        "Баланс обновится автоматически."
     )
 
 
@@ -116,79 +108,75 @@ def refund_reason_prompt() -> str:
     effective_note = ""
     try:
         stars_effective = int(REFUND_PERCENT * (1 - 0.15))
-        effective_note = f"Если часть пополнения была через Stars, учти комиссию обмена ~15% — итоговый возврат будет примерно <code>{stars_effective}%</code> от этой части."
+        effective_note = f"Если часть пополнения через Stars — учти комиссию ~15%, вернётся примерно <code>{stars_effective}%</code> от этой части."
     except Exception:
-        effective_note = "Если часть баланса получена через Stars — учти, что может действовать комиссия."
+        effective_note = "Если часть баланса через Stars — возможна комиссия."
 
     return (
-        "↩️ <b><i>Запрос на возврат средств</i></b>\n\n"
-        "Напиши причину, почему хочешь вернуть средства.\n"
-        f"<b>Важно:</b> при одобрении возвращается <code>{REFUND_PERCENT}%</code> от текущего баланса.\n"
+        "↩️ <b>Запрос на возврат</b>\n\n"
+        "Напиши причину.\n"
+        f"При одобрении возвращается <code>{REFUND_PERCENT}%</code> от баланса.\n"
         f"({effective_note})"
     )
 
 
 def refund_submitted_user_text(amount_before: int, calculated_amount: int) -> str:
     return (
-        "✅ <b><i>Заявка отправлена</i></b>\n\n"
+        "✅ <b>Заявка отправлена</b>\n\n"
         f"Текущий баланс: <b>{fmt_money(amount_before)}</b>\n"
-        f"Приблизительный возврат: <b>{fmt_money(calculated_amount)}</b> (<code>{REFUND_PERCENT}%</code> от баланса)\n\n"
-        "Заявка отправлена администратору — он свяжется с тобой по решению."
+        f"Примерный возврат: <b>{fmt_money(calculated_amount)}</b> (<code>{REFUND_PERCENT}%</code>)\n\n"
+        "Администратор свяжется по решению."
     )
 
 
 def admin_refund_request_text(request_id: int, user_id: int, username: str | None, amount_before: int, calculated_amount: int, reason: str) -> str:
     uname = f"@{username}" if username else "—"
     return (
-        f"🔔 <b><i>Заявка на возврат #{request_id}</i></b>\n\n"
+        f"🔔 <b>Заявка на возврат #{request_id}</b>\n\n"
         f"Пользователь: <code>{user_id}</code> {uname}\n"
         f"Баланс: <b>{fmt_money(amount_before)}</b>\n"
-        f"Предлагаемый возврат: <b>{fmt_money(calculated_amount)}</b>\n\n"
+        f"Возврат: <b>{fmt_money(calculated_amount)}</b>\n\n"
         f"Причина:\n{reason}\n\n"
-        "Нажми кнопку, чтобы одобрить или отклонить заявку."
+        "Нажми кнопку, чтобы одобрить или отклонить."
     )
 
 
 def refund_approved_user_text(amount: int) -> str:
     return (
-        "✅ <b><i>Заявка одобрена</i></b>\n\n"
-        f"Мы вернём: <b>{fmt_money(amount)}</b>\n\n"
-        "Средства будут отправлены вами по выбранному способу возврата (админ свяжется с вами)."
+        "✅ <b>Заявка одобрена</b>\n\n"
+        f"Вернём: <b>{fmt_money(amount)}</b>\n\n"
+        "Средства отправят выбранным способом (админ свяжется)."
     )
 
 
 def refund_rejected_user_text() -> str:
     return (
-        "❌ <b><i>Заявка отклонена</i></b>\n\n"
-        "К сожалению, администратор отклонил ваш запрос.\n"
+        "❌ <b>Заявка отклонена</b>\n\n"
         "Если нужны разъяснения — напиши в поддержку."
     )
 
 
 def getsms_service_prompt() -> str:
     return (
-        f"📱 <b><i>Смена номера</i></b>\n\n"
-        f"Это услуга виртуального номера из GetSMS.\n"
-        f"Цена будет рассчитана автоматически по выбранному сервису.\n\n"
-        f"Нажми кнопку, чтобы увидеть цену и оформить заказ."
+        "📱 <b>Смена номера</b>\n\n"
+        "Виртуальный номер из GetSMS.\n"
+        "Цена рассчитается автоматически.\n\n"
+        "Нажми кнопку, чтобы оформить."
     )
 
 
 def getsms_order_created_text(phone: str, price: float) -> str:
     return (
-        f"✅ <b><i>Заказ создан</i></b>\n\n"
+        "✅ <b>Заказ создан</b>\n\n"
         f"📱 Номер: <code>{phone}</code>\n"
         f"💰 Цена: <b>{fmt_money(price)}</b>\n\n"
-        f"Теперь открой Telegram и запроси код.\n"
-        f"Когда код придёт, бот сообщит сам."
+        "Открой Telegram и запроси код.\n"
+        "Когда код придёт — бот сообщит сам."
     )
 
 
 def getsms_order_status_text(status: str, last_code: str | None, received_codes: int | None) -> str:
-    text = (
-        f"📊 <b><i>Статус заказа</i></b>\n\n"
-        f"Статус: <b>{status}</b>\n"
-    )
+    text = f"📊 <b>Статус заказа</b>\n\nСтатус: <b>{status}</b>\n"
     if last_code:
         text += f"\nКод: <code>{last_code}</code>\n"
     if received_codes is not None:
@@ -198,20 +186,17 @@ def getsms_order_status_text(status: str, last_code: str | None, received_codes:
 
 def getsms_order_price_text(price: float) -> str:
     return (
-        f"📱 <b><i>Смена номера</i></b>\n\n"
+        "📱 <b>Смена номера</b>\n\n"
         f"Цена: <b>{fmt_money(price)}</b>\n\n"
-        f"Если всё подходит, оформи заказ.\n"
-        f"Стоимость спишется с баланса."
+        "Если подходит — оформи заказ.\n"
+        "Стоимость спишется с баланса."
     )
 
 
 def getsms_order_list_text(orders: list) -> str:
     if not orders:
-        return (
-            f"📦 <b><i>Мои номера</i></b>\n\n"
-            f"Пока нет заказов. Оформи номер через меню."
-        )
-    lines = [f"📦 <b><i>Мои номера</i></b>\n\n"]
+        return "📦 <b>Мои номера</b>\n\nПока нет заказов. Оформи через меню."
+    lines = ["📦 <b>Мои номера</b>\n\n"]
     for i, order in enumerate(orders, 1):
         lines.append(
             f"<b>{i}.</b> #{order[1]} — <code>{order[4] or '—'}</code>\n"
@@ -223,29 +208,29 @@ def getsms_order_list_text(orders: list) -> str:
 
 def crypto_pay_prompt() -> str:
     return (
-        f"💎 <b><i>Crypto Bot</i></b>\n\n"
-        f"Введи сумму в <b>рублях</b>.\n"
-        f"Минимум: <b>5 ₽</b>\n\n"
-        f"<i>После оплаты баланс зачислится сам.</i>"
+        "💎 <b>Crypto Bot</b>\n\n"
+        "Введи сумму в рублях.\n"
+        "Минимум: <b>5 ₽</b>\n\n"
+        "После оплаты баланс зачислится сам."
     )
 
 
 def crypto_invoice_text(amount: int) -> str:
     return (
-        f"💳 <b><i>Счёт создан</i></b>\n\n"
+        "💳 <b>Счёт создан</b>\n\n"
         f"Сумма: <b>{fmt_money(amount)}</b>\n\n"
-        f"Нажми кнопку ниже и оплати.\n"
-        f"<i>Баланс придёт сразу после оплаты.</i>"
+        "Нажми и оплати.\n"
+        "Баланс придёт сразу после оплаты."
     )
 
 
 def stars_pay_prompt() -> str:
     return (
-        "⭐ <b><i>Пополнение через Telegram Stars</i></b>\n\n"
-        "Введи, на сколько <b>рублей</b> хочешь пополнить баланс.\n"
-        f"<b>Курс:</b> <code>1 ₽ = {STARS_RATE} ⭐</code>\n\n"
-        "Отправляй <b>несколько подарков</b> подряд: например, <code>15+15</code> ⭐ или <code>15+25</code> ⭐.\n"
-        "<b>Доступные номиналы:</b> <i>15 / 25 / 50 / 100 ⭐</i>."
+        "⭐ <b>Telegram Stars</b>\n\n"
+        "Введи сумму в рублях.\n"
+        f"Курс: <code>1 ₽ = {STARS_RATE} ⭐</code>\n\n"
+        "Отправляй подарки на релеера: 15 / 25 / 50 / 100 ⭐.\n"
+        "Можно несколько подряд."
     )
 
 
@@ -254,59 +239,56 @@ def gifts_pay_text(relayer: str, rate: float = None, amount: float | None = None
         rate = STARS_RATE
     if amount is None or target_stars is None:
         return (
-            "⭐ <b><i>Оплата Stars</i></b>\n\n"
-            f"<b>Отправляй подарки на {relayer}</b>.\n"
-            "Можно отправить один или несколько подарков.\n\n"
-            f"📊 <b>Курс:</b> <code>1 ₽ = {rate} ⭐</code>\n\n"
-            "🎁 <b>Номиналы:</b> <i>15 / 25 / 50 / 100 ⭐</i>"
+            "⭐ <b>Оплата Stars</b>\n\n"
+            f"Отправляй подарки на <b>{relayer}</b>.\n"
+            "Номиналы: 15 / 25 / 50 / 100 ⭐."
         )
     return (
-        "⭐ <b><i>Оплата Stars</i></b>\n\n"
-        f"<b>Сумма:</b> <code>{fmt_money(amount)}</code>\n"
-        f"<b>Нужно получить:</b> <code>{target_stars} ⭐</code>\n"
-        f"<b>Это примерно:</b> <code>{target_stars / rate:.2f} ₽</code> по курсу.\n\n"
-        f"<b>Отправляй подарки на {relayer}</b>.\n"
-        "Можно отправить несколько подарков подряд — например <code>15+15</code>, <code>15+25</code>, <code>25+50</code> и т.д.\n\n"
-        "🎁 <b>Номиналы:</b> <i>15 / 25 / 50 / 100 ⭐</i>\n"
-        f"📊 <b>Курс:</b> <code>1 ₽ = {rate} ⭐</code>\n\n"
-        "<i>Можно отправлять подарки в любой комбинации. После достижения нужного количества Stars баланс пополнится автоматически. Если подарков окажется больше — лишние Stars тоже будут учтены.</i>"
+        "⭐ <b>Оплата Stars</b>\n\n"
+        f"Сумма: <code>{fmt_money(amount)}</code>\n"
+        f"Нужно: <code>{target_stars} ⭐</code>\n"
+        f"По курсу: <code>{target_stars / rate:.2f} ₽</code>\n\n"
+        f"Отправляй подарки на <b>{relayer}</b>.\n"
+        "Можно комбинировать: 15+15, 15+25, 25+50 и т.д.\n\n"
+        "После достижения цели баланс пополнится.\n"
+        "Лишние Stars тоже зачислятся."
     )
 
 
 def rubles_pay_prompt() -> str:
     return (
-        f"💵 <b><i>Оплата в рублях</i></b>\n\n"
-        f"Введи сумму пополнения.\n"
-        f"Минимум: <b>10 ₽</b>\n\n"
-        f"<i>После перевода админ подтвердит платёж.</i>"
+        "💵 <b>Оплата рублями</b>\n\n"
+        "Введи сумму пополнения.\n"
+        "Минимум: <b>10 ₽</b>\n\n"
+        "После перевода админ подтвердит платёж."
     )
 
 
 def rubles_payment_instructions(amount: int, details: str) -> str:
     return (
-        f"💵 <b><i>Реквизиты</i></b>\n\n"
+        "💵 <b>Реквизиты</b>\n\n"
         f"Сумма: <b>{fmt_money(amount)}</b>\n\n"
-        f"Куда переводить:\n"
+        f"Переводи на:\n"
         f"<code>{details}</code>\n\n"
-        f"1. Переведи <b>точно</b> эту сумму\n"
-        f"2. Пришли <b>чек / скрин перевода</b> сюда\n\n"
-        f"<i>После проверки чека баланс зачислят.</i>"
+        "1. Переведи точно эту сумму\n"
+        "2. Пришли чек / скрин сюда\n\n"
+        "После проверки баланс зачислят."
     )
 
 
 def rubles_receipt_prompt() -> str:
     return (
-        f"🧾 <b><i>Пришли чек</i></b>\n\n"
-        f"Отправь <b>фото</b> или <b>файл</b> чека о переводе.\n\n"
-        f"<i>Без чека заявка не уйдёт админу.</i>"
+        "🧾 <b>Пришли чек</b>\n\n"
+        "Отправь фото или файл чека.\n\n"
+        "Без чека заявка не уйдёт админу."
     )
 
 
 def rubles_receipt_received() -> str:
     return (
-        f"✅ <b><i>Чек получен</i></b>\n\n"
-        f"Заявка отправлена на проверку.\n"
-        f"Обычно это занимает <b>1–15 минут</b>."
+        "✅ <b>Чек получен</b>\n\n"
+        "Заявка отправлена на проверку.\n"
+        "Обычно это занимает 1–15 минут."
     )
 
 
@@ -314,40 +296,34 @@ def admin_manual_request_text(payment_id: int, user_id: int, username: str | Non
     uname = f"@{username}" if username else "—"
     name = full_name or "—"
     return (
-        f"🔔 <b><i>Заявка на пополнение</i></b>\n\n"
-        f"№ <code>#{payment_id}</code>\n"
-        f"🆔 <b>ID:</b> <code>{user_id}</code>\n"
-        f"🔗 <b>Username:</b> {uname}\n"
-        f"👤 <b>Имя:</b> {name}\n"
-        f"💰 <b>Сумма:</b> <code>{fmt_money(amount)}</code>\n\n"
-        f"<i>Подтвердить?</i>"
+        f"🔔 <b>Заявка на пополнение #{payment_id}</b>\n\n"
+        f"🆔 <code>{user_id}</code> {uname}\n"
+        f"👤 {name}\n"
+        f"💰 <code>{fmt_money(amount)}</code>\n\n"
+        "Подтвердить?"
     )
 
 
 def manual_approved_user_text(amount: int) -> str:
     return (
-        f"✅ <b><i>Платёж подтверждён</i></b>\n\n"
+        "✅ <b>Платёж подтверждён</b>\n\n"
         f"Зачислено: <b>+{fmt_money(amount)}</b>\n\n"
-        f"<i>Можешь покупать аккаунт.</i>"
+        "Можешь покупать."
     )
 
 
 def manual_rejected_user_text() -> str:
     return (
-        f"❌ <b><i>Платёж отклонён</i></b>\n\n"
-        f"Перевод не подтвердили.\n"
-        f"Если деньги уже ушли — напиши в <b>поддержку</b>."
+        "❌ <b>Платёж отклонён</b>\n\n"
+        "Перевод не подтвердили.\n"
+        "Если деньги ушли — напиши в поддержку."
     )
 
 
 def orders_text(orders: list) -> str:
     if not orders:
-        return (
-            f"📦 <b><i>Мои покупки</i></b>\n\n"
-            f"Пока <b>пусто</b>.\n"
-            f"<i>Оформляй покупки в каталоге.</i>"
-        )
-    lines = [f"📦 <b><i>Мои покупки</i></b>\n\n"]
+        return "📦 <b>Мои покупки</b>\n\nПока пусто.\nОформляй покупки в каталоге."
+    lines = ["📦 <b>Мои покупки</b>\n\n"]
     for i, order in enumerate(orders, 1):
         lines.append(
             f"<b>{i}.</b> {order[0]}\n"
@@ -359,7 +335,7 @@ def orders_text(orders: list) -> str:
 
 def support_text(admin: str = "@baldush") -> str:
     return (
-        f"💬 <b><i>Поддержка</i></b>\n\n"
+        f"💬 <b>Поддержка</b>\n\n"
         f"Вопрос или проблема — пиши:\n\n"
         f"👉 <b>{admin}</b>"
     )
@@ -367,59 +343,57 @@ def support_text(admin: str = "@baldush") -> str:
 
 def info_text() -> str:
     return (
-        f"ℹ️ <b><i>О магазине</i></b>\n\n"
-        f"🔹 Готовые Telegram-аккаунты\n"
-        f"🔹 Номер и код приходят автоматически\n"
-        f"🔹 Поддержка 24/7\n"
-        f"🔹 Оплата: Crypto, Stars, рубли\n\n"
-        f"<i>Удобно, быстро и без лишних действий.</i>"
+        "ℹ️ <b>О магазине</b>\n\n"
+        "🔹 Готовые Telegram-аккаунты\n"
+        "🔹 Номер и код приходят автоматически\n"
+        "🔹 Поддержка 24/7\n"
+        "🔹 Оплата: Crypto, Stars, рубли\n\n"
+        "Удобно, быстро и без лишних действий."
     )
 
 
 def purchase_success_text(phone: str) -> str:
     return (
-        f"✅ <b><i>Оплата прошла</i></b>\n\n"
+        "✅ <b>Оплата прошла</b>\n\n"
         f"📱 Номер: <code>+{phone}</code>\n\n"
-        f"📩 <i>Код отправлен ниже.</i>"
+        "Код отправлен ниже."
     )
 
 
 def purchase_review_text() -> str:
     return (
-        "🙏 <b><i>Спасибо за покупку!</i></b>\n\n"
-        "Оставь отзыв с юзернеймом бота в <b>@baldushrep</b>.\n"
-        "Поставь облачный пароль на аккаунт и свою почту для входа (если есть возможность)."
+        "🙏 <b>Спасибо за покупку!</b>\n\n"
+        "Оставь отзыв в <b>@baldushrep</b>.\n"
+        "Поставь облачный пароль и почту для входа."
     )
 
 
 def purchase_processing_text() -> str:
     return (
-        "⏳ <b><i>Покупка в процессе</i></b>\n\n"
-        "Мы обрабатываем твой платёж и подготавливаем аккаунт.\n"
-        "Пожалуйста, немного подожди — это займёт несколько секунд."
+        "⏳ <b>Обработка</b>\n\n"
+        "Готовим аккаунт.\n"
+        "Это займёт несколько секунд."
     )
 
 
 def login_help_text() -> str:
     return (
-        "❓ <b><i>Помощь с входом</i></b>\n\n"
-        "<b>Самые частые причины, из-за которых не получается войти в аккаунт:</b>\n\n"
-        "1️⃣ <b>Telegram просит заплатить 1$ за код (расходы на SMS).</b>\n"
-        "Что бы это обойти, скачай <b>Nicegram</b> или попробуй запросить код с <b>ПК</b>.\n\n"
-        "2️⃣ <b>Не получается ввести код с почты.</b>\n"
-        "Эта проблема распространена среди клиентов <b>Ayugram</b> и <b>Exteragram</b>.\n"
-        "Используй другой клиент для входа: <b>Telegram</b> или <b>Nicegram</b>.\n\n"
-        "3️⃣ <b>Код на аккаунт не приходит.</b>\n"
-        "Эта причина так же распространена среди клиентов <b>Ayugram</b> и <b>Exteragram</b>.\n"
-        "Используй другой клиент для входа.\n\n"
-        "Если появилась другая проблема, сообщи об этом в тех поддержку: <b>@baldush</b>"
+        "❓ <b>Помощь с входом</b>\n\n"
+        "<b>Частые проблемы:</b>\n\n"
+        "1. <b>Telegram просит 1$ за код.</b>\n"
+        "Скачай <b>Nicegram</b> или запроси код с <b>ПК</b>.\n\n"
+        "2. <b>Не получается ввести код.</b>\n"
+        "Используй <b>Telegram</b> или <b>Nicegram</b>.\n\n"
+        "3. <b>Код не приходит.</b>\n"
+        "Попробуй другой клиент.\n\n"
+        "Если проблема осталась — пиши в поддержку: <b>@baldush</b>"
     )
 
 
 def my_purchases_text(accounts) -> str:
     if not accounts:
-        return "<b>📦 Мои покупки</b>\n\nУ вас пока нет покупок."
-    lines = ["<b>📦 Мои покупки</b>\n\n"]
+        return "📦 <b>Мои покупки</b>\n\nПока нет покупок."
+    lines = ["📦 <b>Мои покупки</b>\n\n"]
     for account in accounts:
         phone = account["phone"]
         role = "Покупатель" if account["role"] == "buyer" else "Получатель подарка"
@@ -430,155 +404,143 @@ def my_purchases_text(accounts) -> str:
 def my_account_detail_text(phone: str) -> str:
     return (
         f"📱 <b>Аккаунт</b> <code>+{phone}</code>\n\n"
-        "Нажмите «Получить код», чтобы бот перехватил код из Telegram.\n"
+        "Нажми «Получить код», чтобы перехватить код из Telegram.\n"
         "Код можно запрашивать много раз, пока сессия активна."
     )
 
 
 def purchase_failed_text(reason: str | None = None) -> str:
     text = (
-        "❌ <b><i>Не удалось оформить покупку</i></b>\n\n"
-        "Произошла ошибка при попытке купить аккаунт.\n"
+        "❌ <b>Не удалось оформить покупку</b>\n\n"
+        "Произошла ошибка.\n"
+        "Средства вернутся на баланс, если списание уже было."
     )
     if reason:
-        text += f"\nПричина: <code>{reason}</code>\n"
-    text += "\nСредства будут возвращены на баланс, если списание уже произошло."
+        text += f"\nПричина: <code>{reason}</code>"
     return text
 
 
 def code_received_text(code: str) -> str:
     return (
-        f"📩 <b><i>Код получен</i></b>\n\n"
+        "📩 <b>Код получен</b>\n\n"
         f"<code>{code}</code>\n\n"
-        f"<i>Введи его в Telegram.</i>"
+        "Введи его в Telegram."
     )
 
 
 def code_timeout_text(amount: int) -> str:
     return (
-        f"⏰ <b><i>Код не пришёл</i></b>\n\n"
+        "⏰ <b>Код не пришёл</b>\n\n"
         f"Время вышло.\n"
         f"<b>{fmt_money(amount)}</b> вернули на баланс.\n\n"
-        f"<i>Можешь взять другой аккаунт.</i>"
+        "Можешь взять другой аккаунт."
     )
 
 
 def balance_topup_text(amount: int) -> str:
     return (
-        f"💎 <b><i>Баланс пополнен</i></b>\n\n"
+        "💎 <b>Баланс пополнен</b>\n\n"
         f"Зачислено: <b>+{fmt_money(amount)}</b>\n\n"
-        f"<i>Можешь переходить к покупке.</i>"
+        "Можешь переходить к покупке."
     )
 
 
 def transfer_amount_prompt() -> str:
     return (
-        "💱 <b><i>Перевод баланса</i></b>\n\n"
-        "Введи сумму, которую хочешь перевести.\n"
-        "<b>Сумма списывается с твоего баланса.</b>\n\n"
-        "<i>Минимум 1 ₽.</i>"
+        "💱 <b>Перевод баланса</b>\n\n"
+        "Введи сумму.\n"
+        "<b>Списывается с твоего баланса.</b>\n\n"
+        "Минимум 1 ₽."
     )
 
 
 def transfer_recipient_prompt() -> str:
     return (
-        "💱 <b><i>Кому перевести</i></b>\n\n"
+        "💱 <b>Кому перевести?</b>\n\n"
         "Отправь username получателя.\n"
-        "Получатель должен уже начать диалог с ботом.\n\n"
-        "<b>Пример:</b> <code>@username</code>"
+        "Он должен начать диалог с ботом.\n\n"
+        "Пример: <code>@username</code>"
     )
 
 
 def transfer_success_text(amount: int, recipient: str) -> str:
     return (
-        "✅ <b><i>Перевод выполнен</i></b>\n\n"
-        f"С баланса списано: <b>{fmt_money(amount)}</b>\n"
+        "✅ <b>Перевод выполнен</b>\n\n"
+        f"Списано: <b>{fmt_money(amount)}</b>\n"
         f"Получатель: <b>{recipient}</b>\n\n"
-        "<i>Он получит уведомление и зачисление.</i>"
+        "Он получит уведомление."
     )
 
 
 def transfer_received_text(amount: int, sender: str) -> str:
     return (
-        "💸 <b><i>Тебе поступили деньги</i></b>\n\n"
+        "💸 <b>Тебе поступили деньги</b>\n\n"
         f"Сумма: <b>{fmt_money(amount)}</b>\n"
         f"От: <b>{sender}</b>\n\n"
-        "<i>Баланс пополнен автоматически.</i>"
+        "Баланс пополнен."
     )
 
 
 def admin_panel_text() -> str:
-    return (
-        f"👑 <b><i>Admin Panel</i></b>\n\n"
-        f"<i>Управление магазином</i>"
-    )
+    return "👑 <b>Admin Panel</b>\n\nУправление магазином"
 
 
 def lolz_panel_text(token_set: bool) -> str:
-    status = "<b>токен установлен</b>" if token_set else "<b>токен не задан</b>"
+    status = "токен установлен" if token_set else "токен не задан"
     return (
-        f"💼 <b><i>Lolz API</i></b>\n\n"
-        f"Статус: {status}\n\n"
-        f"Здесь можно настроить Lolz API и импортировать аккаунты прямо в каталог."
+        f"💼 <b>Lolz API</b>\n\n"
+        f"Статус: <b>{status}</b>\n\n"
+        "Настройка импорта аккаунтов из Lolz."
     )
 
 
 def lolz_token_prompt() -> str:
     return (
-        "🔑 <b><i>Установи Lolz API токен</i></b>\n\n"
-        "Введи токен, который используется для доступа к Lolz API."
+        "🔑 <b>Lolz API токен</b>\n\n"
+        "Введи токен для доступа к Lolz API."
     )
 
 
 def lolz_token_saved_text() -> str:
-    return (
-        "✅ <b><i>Токен Lolz API сохранён</i></b>\n\n"
-        "Теперь можно импортировать аккаунты из Lolz."
-    )
+    return "✅ <b>Токен сохранён</b>\n\nТеперь можно импортировать аккаунты."
 
 
 def lolz_import_service_prompt() -> str:
     return (
-        "⬇️ <b><i>Импорт аккаунта из Lolz</i></b>\n\n"
-        "Введи категорию или название услуги Lolz, например <code>USA</code>."
+        "⬇️ <b>Импорт из Lolz</b>\n\n"
+        "Введи категорию или название услуги, например <code>USA</code>."
     )
 
 
 def lolz_import_price_prompt(service: str) -> str:
     return (
-        f"⬇️ <b><i>Импорт аккаунта {service}</i></b>\n\n"
-        "Введите вашу цену продажи в рублях — например, <code>35</code>.\n"
-        "Аккаунт будет добавлен в каталог по этой цене."
+        f"⬇️ <b>Импорт: {service}</b>\n\n"
+        "Введи цену продажи в рублях — например, <code>35</code>.\n"
+        "Аккаунт добавится в каталог."
     )
 
 
 def lolz_import_result_text(success: bool, message: str) -> str:
     if success:
-        return (
-            f"✅ <b><i>Аккаунт импортирован</i></b>\n\n"
-            f"{message}"
-        )
-    return (
-        f"❌ <b><i>Не удалось импортировать</i></b>\n\n"
-        f"{message}"
-    )
+        return f"✅ <b>Аккаунт импортирован</b>\n\n{message}"
+    return f"❌ <b>Не удалось импортировать</b>\n\n{message}"
 
 
 def help_text() -> str:
     return (
-        f"📖 <b><i>Помощь</i></b>\n\n"
-        f"<code>/start</code> — меню\n"
-        f"<code>/catalog</code> — каталог аккаунтов\n"
-        f"<code>/balance</code> — баланс\n"
-        f"<code>/orders</code> — покупки\n"
-        f"<code>/help</code> — эта справка\n\n"
-        f"📢 Канал: <b>t.me/bldshaccs</b>"
+        "📖 <b>Помощь</b>\n\n"
+        "<code>/start</code> — меню\n"
+        "<code>/catalog</code> — каталог\n"
+        "<code>/balance</code> — баланс\n"
+        "<code>/orders</code> — покупки\n"
+        "<code>/help</code> — справка\n\n"
+        "Канал: <b>t.me/bldshaccs</b>"
     )
 
 
 def subscribe_prompt_text() -> str:
     return (
-        f"📢 <b><i>Новости</i></b>\n\n"
-        f"Подпишись, чтобы не пропускать новые аккаунты и акции.\n\n"
-        f"👉 <b>t.me/bldshaccs</b>"
+        "📢 <b>Новости</b>\n\n"
+        "Подпишись, чтобы не пропускать новые аккаунты.\n\n"
+        "👉 <b>t.me/bldshaccs</b>"
     )
